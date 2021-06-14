@@ -1,17 +1,12 @@
 package de.azraanimating.tcpdumper;
 
-import com.google.gson.JsonObject;
 import de.azraanimating.tcpdumper.config.Config;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-import org.json.JSONObject;
 
 import java.io.*;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
-import java.util.Objects;
 
 public class TCPDumper {
 
@@ -35,6 +30,7 @@ public class TCPDumper {
             this.config = Config.fromFile(new File("config.json"));
             this.webhookManager = new WebhookManager(this);
             this.triggerScale = this.checkUnitScale(this.config.unitToTrigger);
+            Thread.sleep(1000);
             System.out.println("Startup Completed");
             String[] args = new String[]{"/bin/bash", "-c", "nload devices " + this.config.networkInterface, "with", "args"};
             Process process = new ProcessBuilder(args).start();
@@ -59,7 +55,7 @@ public class TCPDumper {
             if(line.contains("Curr:")) {
                 String[] parts = line.split("Curr: ");
                 String[] partsParts = parts[1].split("/s");
-                //System.out.println(partsParts[0]);
+                System.out.println(partsParts[0] + "/s");
                 this.filter(partsParts[0]);
             };
         }
@@ -107,11 +103,17 @@ public class TCPDumper {
     private void triggerTCPDump(String poT, String magnitude) throws IOException {
         this.webhookManager.sendDiscordNotifications(poT, magnitude);
         this.webhookManager.sendTelegramNotification(poT, magnitude);
-        String[] args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l | tee " + poT + ".out", "with", "args"};
-        Process process = new ProcessBuilder(args).start();
-        InputStream inputStream = process.getInputStream();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        this.printDump(process, reader);
+        ThreadHandler.startExecute(() -> {
+            String[] args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l | tee " + poT + ".out", "with", "args"};
+            try {
+                Process process = new ProcessBuilder(args).start();
+                InputStream inputStream = process.getInputStream();
+                BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                printDump(process, reader);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     public Config getConfig() {
@@ -135,7 +137,7 @@ public class TCPDumper {
     }
 
     private String getDateTime() throws IOException {
-        OkHttpClient client = new OkHttpClient().newBuilder()
+        /*OkHttpClient client = new OkHttpClient().newBuilder()
                 .build();
         Request request = new Request.Builder()
                 .url("http://worldtimeapi.org/api/timezone/" + this.config.timeZone)
@@ -146,11 +148,13 @@ public class TCPDumper {
             if(response.body() != null) {
                 String data = Objects.requireNonNull(response.body()).string();
                 JSONObject jsonObject = new JSONObject(data);
+                response.close();
 
                 return jsonObject.getString("datetime");
             }
         }
+         */
         LocalDateTime localDateTime = LocalDateTime.now();
-        return this.dateTimeFormatter.format(localDateTime);
+        return this.dateTimeFormatter.withZone(ZoneId.of(this.config.timeZone)).format(localDateTime);
     }
 }
