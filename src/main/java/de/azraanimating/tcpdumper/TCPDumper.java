@@ -102,7 +102,7 @@ public class TCPDumper {
                             .build();
                     MediaType mediaType = MediaType.parse("text/plain");
                     RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                            .addFormDataPart("content", "@everyone TCPDump Triggered at " + poT + " because of " + magnitude + " Surge. \n Dump Available in " + this.config.tcpDumpDuration)
+                            .addFormDataPart("content", "@everyone TCPDump Triggered at " + poT + " because of " + magnitude + "/s Surge. \nDump Available in " + this.config.tcpDumpDuration)
                             .build();
                     Request request = new Request.Builder()
                             .url(webhook)
