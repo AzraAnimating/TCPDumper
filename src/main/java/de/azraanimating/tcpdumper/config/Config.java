@@ -11,10 +11,16 @@ public class Config {
     public static Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     public String unitToTrigger = "mbit";
-    public double bandWidth = 10.0;
+    public double bandWidth = 50.0;
     public int cooldownToNextDumpMS = 10000;
     public String tcpDumpDuration = "10m";
-    public String webhookURLs = "insertWebhook";
+    public String networkInterface = "eth0";
+    public String discordWebhooks = "insertWebhook";
+    public String telegramWebhooks = "insertWebhook";
+    public String ip = "1.1.1.1";
+    public String serverName = "TestServer";
+    public String location = "OVH";
+    public String timeZone = "europe/berlin";
 
     public Config toFile(final File file) throws Exception {
         file.mkdirs();

@@ -1,12 +1,17 @@
 package de.azraanimating.tcpdumper;
 
+import com.google.gson.JsonObject;
 import de.azraanimating.tcpdumper.config.Config;
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import org.json.JSONObject;
 
 import java.io.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Objects;
 
 public class TCPDumper {
 
@@ -15,16 +20,23 @@ public class TCPDumper {
     private int triggerScale;
     private long lastTrigger;
     private DateTimeFormatter dateTimeFormatter;
+    private WebhookManager webhookManager;
 
 
     public TCPDumper() {
         this.lastTrigger = 0;
         this.dateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy-HH:mm:ss");
+        this.startProcess();
+    }
+
+    private void startProcess() {
+        this.printStartupGraphic();
         try {
             this.config = Config.fromFile(new File("config.json"));
+            this.webhookManager = new WebhookManager(this);
             this.triggerScale = this.checkUnitScale(this.config.unitToTrigger);
-            //Thread.sleep(1000);
-            String[] args = new String[]{"/bin/bash", "-c", "nload", "with", "args"};
+            System.out.println("Startup Completed");
+            String[] args = new String[]{"/bin/bash", "-c", "nload devices " + this.config.networkInterface, "with", "args"};
             Process process = new ProcessBuilder(args).start();
             InputStream inputStream = process.getInputStream();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -47,8 +59,19 @@ public class TCPDumper {
             if(line.contains("Curr:")) {
                 String[] parts = line.split("Curr: ");
                 String[] partsParts = parts[1].split("/s");
+                //System.out.println(partsParts[0]);
                 this.filter(partsParts[0]);
+            };
+        }
+    }
+
+    private void printDump(Process process, BufferedReader console) throws IOException {
+        String line;
+        while ((line = console.readLine()) != null) {
+            if(!process.isAlive()) {
+                process.destroy();
             }
+            //System.out.println(line);
         }
     }
 
@@ -60,14 +83,11 @@ public class TCPDumper {
         if(amount >= this.config.bandWidth) {
             if(this.checkUnitScale(unit) >= this.triggerScale && (System.currentTimeMillis() - this.lastTrigger) > this.config.cooldownToNextDumpMS) {
                 this.lastTrigger = System.currentTimeMillis();
-                LocalDateTime now = LocalDateTime.now();
-                String poT = this.dateTimeFormatter.format(now);
-                System.out.println("TRIGGERED AT " + poT);
+                String poT = this.getDateTime();
+                System.out.println("TRIGGERED AT " + poT + " RUNNING FOR " + this.config.tcpDumpDuration);
                 this.triggerTCPDump(poT, amount + " " + unit);
             }
         }
-
-        System.out.println(amount + " " + unit);
     }
 
     private int checkUnitScale(String unit) {
@@ -85,45 +105,52 @@ public class TCPDumper {
     }
 
     private void triggerTCPDump(String poT, String magnitude) throws IOException {
-        this.sendDiscordNotification(poT, magnitude);
+        this.webhookManager.sendDiscordNotifications(poT, magnitude);
+        this.webhookManager.sendTelegramNotification(poT, magnitude);
         String[] args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l | tee " + poT + ".out", "with", "args"};
         Process process = new ProcessBuilder(args).start();
         InputStream inputStream = process.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        this.printDump(process, reader);
     }
 
-    private void sendDiscordNotification(String poT, String magnitude) throws IOException {
-        if(!this.config.webhookURLs.equals("insertWebhook")) {
-            String[] webhooks = this.config.webhookURLs.split(",");
-            if(webhooks.length > 1) {
-                for (int i = 0; i < webhooks.length; i++) {
-                    String webhook = webhooks[i];
-                    OkHttpClient client = new OkHttpClient().newBuilder()
-                            .build();
-                    MediaType mediaType = MediaType.parse("text/plain");
-                    RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                            .addFormDataPart("content", "@everyone TCPDump Triggered at " + poT + " because of " + magnitude + "/s Surge. \nDump Available in " + this.config.tcpDumpDuration)
-                            .build();
-                    Request request = new Request.Builder()
-                            .url(webhook)
-                            .method("POST", body)
-                            .build();
-                    client.newCall(request).execute().close();
-                }
-            } else {
-                OkHttpClient client = new OkHttpClient().newBuilder()
-                        .build();
-                MediaType mediaType = MediaType.parse("text/plain");
-                RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
-                        .addFormDataPart("content", "@everyone TCPDump Triggered at " + poT + " because of " + magnitude + "/s Surge. \nDump Available in " + this.config.tcpDumpDuration)
-                        .build();
-                Request request = new Request.Builder()
-                        .url(this.config.webhookURLs)
-                        .method("POST", body)
-                        .build();
-                client.newCall(request).execute().close();
+    public Config getConfig() {
+        return config;
+    }
+
+    private void printStartupGraphic() {
+        System.out.println("" +
+                "@@@@@@@   @@@@@@@  @@@@@@@      @@@@@@@   @@@  @@@  @@@@@@@@@@   @@@@@@@   @@@@@@@@  @@@@@@@ \n" +
+                "@@@@@@@  @@@@@@@@  @@@@@@@@     @@@@@@@@  @@@  @@@  @@@@@@@@@@@  @@@@@@@@  @@@@@@@@  @@@@@@@@\n" +
+                "  @@!    !@@       @@!  @@@     @@!  @@@  @@!  @@@  @@! @@! @@!  @@!  @@@  @@!       @@!  @@@\n" +
+                "  !@!    !@!       !@!  @!@     !@!  @!@  !@!  @!@  !@! !@! !@!  !@!  @!@  !@!       !@!  @!@\n" +
+                "  @!!    !@!       @!@@!@!      @!@  !@!  @!@  !@!  @!! !!@ @!@  @!@@!@!   @!!!:!    @!@!!@! \n" +
+                "  !!!    !!!       !!@!!!       !@!  !!!  !@!  !!!  !@!   ! !@!  !!@!!!    !!!!!:    !!@!@!  \n" +
+                "  !!:    :!!       !!:          !!:  !!!  !!:  !!!  !!:     !!:  !!:       !!:       !!: :!! \n" +
+                "  :!:    :!:       :!:          :!:  !:!  :!:  !:!  :!:     :!:  :!:       :!:       :!:  !:!\n" +
+                "   ::     ::: :::   ::           :::: ::  ::::: ::  :::     ::    ::        :: ::::  ::   :::\n" +
+                "   :      :: :: :   :           :: :  :    : :  :    :      :     :        : :: ::    :   : :\n" +
+                "                                                                                             \n" +
+                "TCP Dumper by AzraAnimating");
+    }
+
+    private String getDateTime() throws IOException {
+        OkHttpClient client = new OkHttpClient().newBuilder()
+                .build();
+        Request request = new Request.Builder()
+                .url("http://worldtimeapi.org/api/timezone/" + this.config.timeZone)
+                .method("GET", null)
+                .build();
+        Response response = client.newCall(request).execute();
+        if(response.isSuccessful()) {
+            if(response.body() != null) {
+                String data = Objects.requireNonNull(response.body()).string();
+                JSONObject jsonObject = new JSONObject(data);
+
+                return jsonObject.getString("datetime");
             }
         }
+        LocalDateTime localDateTime = LocalDateTime.now();
+        return this.dateTimeFormatter.format(localDateTime);
     }
-
 }
