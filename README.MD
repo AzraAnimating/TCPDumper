@@ -1,6 +1,6 @@
 #TCP Dumper
 
-A Monitoring Application which logs all TCP Traffic using TCPDump when a certain threashold
+A Monitoring Application which logs all TCP Traffic using TCPDump when a certain threshold
 is passed.
 
 

@@ -14,6 +14,7 @@ public class Config {
     public double bandWidth = 10.0;
     public int cooldownToNextDumpMS = 10000;
     public String tcpDumpDuration = "10m";
+    public String webhookURLs = "insertWebhook";
 
     public Config toFile(final File file) throws Exception {
         file.mkdirs();

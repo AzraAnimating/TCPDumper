@@ -1,6 +1,7 @@
 package de.azraanimating.tcpdumper;
 
 import de.azraanimating.tcpdumper.config.Config;
+import okhttp3.*;
 
 import java.io.*;
 import java.time.LocalDateTime;
@@ -62,7 +63,7 @@ public class TCPDumper {
                 LocalDateTime now = LocalDateTime.now();
                 String poT = this.dateTimeFormatter.format(now);
                 System.out.println("TRIGGERED AT " + poT);
-                this.triggerTCPDump(poT);
+                this.triggerTCPDump(poT, amount + " " + unit);
             }
         }
 
@@ -83,11 +84,46 @@ public class TCPDumper {
         return 0;
     }
 
-    private void triggerTCPDump(String poT) throws IOException {
+    private void triggerTCPDump(String poT, String magnitude) throws IOException {
+        this.sendDiscordNotification(poT, magnitude);
         String[] args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l | tee " + poT + ".out", "with", "args"};
         Process process = new ProcessBuilder(args).start();
         InputStream inputStream = process.getInputStream();
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+    }
+
+    private void sendDiscordNotification(String poT, String magnitude) throws IOException {
+        if(!this.config.webhookURLs.equals("insertWebhook")) {
+            String[] webhooks = this.config.webhookURLs.split(",");
+            if(webhooks.length > 1) {
+                for (int i = 0; i < webhooks.length; i++) {
+                    String webhook = webhooks[i];
+                    OkHttpClient client = new OkHttpClient().newBuilder()
+                            .build();
+                    MediaType mediaType = MediaType.parse("text/plain");
+                    RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                            .addFormDataPart("content", "@everyone TCPDump Triggered at " + poT + " because of " + magnitude + " Surge. \n Dump Available in " + this.config.tcpDumpDuration)
+                            .build();
+                    Request request = new Request.Builder()
+                            .url(webhook)
+                            .method("POST", body)
+                            .build();
+                    client.newCall(request).execute().close();
+                }
+            } else {
+                OkHttpClient client = new OkHttpClient().newBuilder()
+                        .build();
+                MediaType mediaType = MediaType.parse("text/plain");
+                RequestBody body = new MultipartBody.Builder().setType(MultipartBody.FORM)
+                        .addFormDataPart("content", "@everyone TCPDump Triggered at " + poT + " because of " + magnitude + "/s Surge. \nDump Available in " + this.config.tcpDumpDuration)
+                        .build();
+                Request request = new Request.Builder()
+                        .url(this.config.webhookURLs)
+                        .method("POST", body)
+                        .build();
+                client.newCall(request).execute().close();
+            }
+        }
     }
 
 }
