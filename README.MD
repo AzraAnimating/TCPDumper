@@ -21,12 +21,12 @@ http://worldtimeapi.org/api/timezone/
 
 ```JSON
 {
-  "unitToTrigger": "mbit", Determinesat what unit a Dump should be triggered at
+  "unitToTrigger": "mbit", #Determinesat what unit a Dump should be triggered at
   "bandWidth": 50.0,
-  "cooldownToNextDumpMS": 10000, Cooldown to next dump in Milliseconds
-  "tcpDumpDuration": "10m", Duration of the TCPDump
-  "networkInterface": "eth0", Interface that should be monitored
-  "discordWebhooks": "insertWebhook", Discord Webhooks, devided by ","
+  "cooldownToNextDumpMS": 10000, #Cooldown to next dump in Milliseconds
+  "tcpDumpDuration": "10m", #Duration of the TCPDump
+  "networkInterface": "eth0", #Interface that should be monitored
+  "discordWebhooks": "insertWebhook", #Discord Webhooks, devided by ","
   "telegramWebhooks": "insertWebhook",
   "ip": "1.1.1.1",
   "serverName": "TestServer",
