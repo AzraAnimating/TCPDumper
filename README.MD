@@ -3,12 +3,7 @@
 A Monitoring Application which logs all TCP Traffic using TCPDump when a certain threshold
 is passed.
 
-
-
-
-Timezones can be aquired here:
-
-http://worldtimeapi.org/api/timezone/
+This is used to dump TCP Based DDoS attacks when one is detected.
 
 ### Requires:
 
@@ -21,16 +16,15 @@ http://worldtimeapi.org/api/timezone/
 
 ```JSON
 {
-  "unitToTrigger": "mbit", #Determinesat what unit a Dump should be triggered at
+  "unitToTrigger": "mbit",
   "bandWidth": 50.0,
-  "cooldownToNextDumpMS": 10000, #Cooldown to next dump in Milliseconds
-  "tcpDumpDuration": "10m", #Duration of the TCPDump
-  "networkInterface": "eth0", #Interface that should be monitored
-  "discordWebhooks": "insertWebhook", #Discord Webhooks, devided by ","
+  "cooldownToNextDumpMS": 10000,
+  "tcpDumpDuration": "10m",
+  "networkInterface": "eth0",
+  "discordWebhooks": "insertWebhook",
   "telegramWebhooks": "insertWebhook",
   "ip": "1.1.1.1",
   "serverName": "TestServer",
-  "location": "OVH",
-  "timeZone": "europe/berlin"
+  "location": "OVH"
 }
 ```
