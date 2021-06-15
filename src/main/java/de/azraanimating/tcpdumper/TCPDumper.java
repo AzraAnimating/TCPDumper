@@ -155,6 +155,6 @@ public class TCPDumper {
         }
          */
         LocalDateTime localDateTime = LocalDateTime.now();
-        return this.dateTimeFormatter.withZone(ZoneId.of(this.config.timeZone)).format(localDateTime);
+        return this.dateTimeFormatter.format(localDateTime);
     }
 }
