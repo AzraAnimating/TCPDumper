@@ -20,6 +20,8 @@ public class Config {
     public String ip = "1.1.1.1";
     public String serverName = "TestServer";
     public String location = "OVH";
+    public int maxPacketsPerDump = 0;
+    public String additionalParameters = "-v -S";
 
     public Config toFile(final File file) throws Exception {
         file.mkdirs();

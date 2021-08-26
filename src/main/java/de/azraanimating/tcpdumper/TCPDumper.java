@@ -104,7 +104,13 @@ public class TCPDumper {
         this.webhookManager.sendDiscordNotifications(poT, magnitude);
         this.webhookManager.sendTelegramNotification(poT, magnitude);
         ThreadHandler.startExecute(() -> {
-            String[] args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l | tee " + poT + ".out", "with", "args"};
+            String[] args;
+            if(this.config.maxPacketsPerDump < 1) {
+                args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l " + this.config.additionalParameters + " | tee " + poT + ".out", "with", "args"};
+            } else {
+                args = new String[]{"/bin/bash", "-c", "tcpdump -n -l -c " + this.config.maxPacketsPerDump + " " + this.config.additionalParameters + " | tee " + poT + ".out", "with", "args"};
+            }
+            System.out.println(args[2]);
             try {
                 Process process = new ProcessBuilder(args).start();
                 InputStream inputStream = process.getInputStream();
