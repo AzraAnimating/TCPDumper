@@ -106,9 +106,9 @@ public class TCPDumper {
         ThreadHandler.startExecute(() -> {
             String[] args;
             if(this.config.maxPacketsPerDump < 1) {
-                args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l " + this.config.additionalParameters + " | tee " + poT + ".out", "with", "args"};
+                args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l " + this.config.additionalParameters + " -w " + poT }; //-w write to file poT.pcap 
             } else {
-                args = new String[]{"/bin/bash", "-c", "tcpdump -n -l -c " + this.config.maxPacketsPerDump + " " + this.config.additionalParameters + " | tee " + poT + ".out", "with", "args"};
+                args = new String[]{"/bin/bash", "-c", "tcpdump -n -l -c " + this.config.maxPacketsPerDump + " " + this.config.additionalParameters + " -w " + poT}; //-w write to file poT.pcap   
             }
             System.out.println(args[2]);
             try {
