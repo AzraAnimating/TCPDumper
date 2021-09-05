@@ -27,6 +27,7 @@ public class TCPDumper {
     private void startProcess() {
         this.printStartupGraphic();
         try {
+            new File("dumps/").mkdirs();
             this.config = Config.fromFile(new File("config.json"));
             this.webhookManager = new WebhookManager(this);
             this.triggerScale = this.checkUnitScale(this.config.unitToTrigger);
@@ -106,9 +107,9 @@ public class TCPDumper {
         ThreadHandler.startExecute(() -> {
             String[] args;
             if(this.config.maxPacketsPerDump < 1) {
-                args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -n -l " + this.config.additionalParameters + " -w " + poT + ".pcap", "with", "args"};
+                args = new String[]{"/bin/bash", "-c", "timeout " + this.config.tcpDumpDuration + " tcpdump -i " + this.config.networkInterface + " -n -l " + this.config.additionalParameters + " -w dumps/" + poT + ".pcap", "with", "args"};
             } else {
-                args = new String[]{"/bin/bash", "-c", "tcpdump -n -l -c " + this.config.maxPacketsPerDump + " " + this.config.additionalParameters + " -w " + poT + ".pcap", "with", "args"};
+                args = new String[]{"/bin/bash", "-c", "tcpdump -i " + this.config.networkInterface + " -n -l -c " + this.config.maxPacketsPerDump + " " + this.config.additionalParameters + " -w dumps/" + poT + ".pcap", "with", "args"};
             }
             System.out.println(args[2]);
             try {

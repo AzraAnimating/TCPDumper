@@ -22,7 +22,7 @@ public class WebhookManager {
                 for (int i = 0; i < webhooks.length; i++) {
                     String webhook = webhooks[i];
                     MediaType mediaType = MediaType.parse("application/json");
-                    RequestBody body = RequestBody.create(mediaType, "" +
+                    RequestBody body = RequestBody.create("" +
                             "{\n" +
                             "  \"content\": null,\n" +
                             "  \"embeds\": [\n" +
@@ -42,7 +42,7 @@ public class WebhookManager {
                             "      }\n" +
                             "    }\n" +
                             "  ]\n" +
-                            "}");
+                            "}", mediaType);
                     Request request = new Request.Builder()
                             .url(webhook)
                             .method("POST", body)
@@ -52,7 +52,7 @@ public class WebhookManager {
                 }
             } else {
                 MediaType mediaType = MediaType.parse("application/json");
-                RequestBody body = RequestBody.create(mediaType, "" +
+                RequestBody body = RequestBody.create("" +
                         "{\n" +
                         "  \"content\": null,\n" +
                         "  \"embeds\": [\n" +
@@ -72,7 +72,7 @@ public class WebhookManager {
                         "      }\n" +
                         "    }\n" +
                         "  ]\n" +
-                        "}");
+                        "}", mediaType);
                 Request request = new Request.Builder()
                         .url(this.tcpDumper.getConfig().discordWebhooks)
                         .method("POST", body)
