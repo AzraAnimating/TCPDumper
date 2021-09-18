@@ -102,8 +102,6 @@ public class TCPDumper {
     }
 
     private void triggerTCPDump(String poT, String magnitude) throws IOException {
-        this.webhookManager.sendDiscordNotifications(poT, magnitude);
-        this.webhookManager.sendTelegramNotification(poT, magnitude);
         ThreadHandler.startExecute(() -> {
             String[] args;
             if(this.config.maxPacketsPerDump < 1) {
@@ -121,6 +119,8 @@ public class TCPDumper {
                 e.printStackTrace();
             }
         });
+        this.webhookManager.sendDiscordNotifications(poT, magnitude);
+        this.webhookManager.sendTelegramNotification(poT, magnitude);
     }
 
     public Config getConfig() {
