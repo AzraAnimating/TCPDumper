@@ -25,6 +25,8 @@ This is used to dump TCP Based DDoS attacks when one is detected.
   "telegramWebhooks": "insertWebhook",
   "ip": "1.1.1.1",
   "serverName": "TestServer",
-  "location": "OVH"
+  "location": "OVH",
+  "maxPacketsPerDump": 0,
+  "additionalParameters": "-v -S"
 }
 ```
